@@ -1,0 +1,27 @@
+# Codex global configuration
+model = "gpt-5"
+model_provider="openai"   # 공백 없는 표기를 일부러 유지 (byte 보존 확인용)
+
+[profiles.fast]
+model = "gpt-5-mini"
+
+# docs lookup server
+[mcp_servers.context7]
+command = "npx"
+args = ["-y", "@upstash/context7-mcp"]
+env = { CONTEXT7_API_KEY = "secret" }
+enabled = true
+startup_timeout_sec = 20
+
+[mcp_servers.github]
+url = "https://api.githubcopilot.com/mcp/"
+bearer_token_env_var = "GITHUB_PAT"
+custom_field = "keep-me"
+
+[projects."/Users/me/repo"]
+trust_level = "trusted"
+
+[mcp_servers.notion]
+url = "https://mcp.notion.com/mcp"
+bearer_token_env_var = "NOTION_TOKEN"
+http_headers = { Notion-Version = "2022-06-28" }
