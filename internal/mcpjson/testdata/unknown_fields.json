@@ -1,0 +1,12 @@
+{
+  "$schema": "https://example.com/mcp.schema.json",
+  "mcpServers": {
+    "future-server": {
+      "command": "future-mcp",
+      "experimentalFlag": true,
+      "nested": {
+        "key": "value"
+      }
+    }
+  }
+}

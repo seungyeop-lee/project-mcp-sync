@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "legacy-sse": {
+      "type": "sse",
+      "url": "https://example.com/sse"
+    }
+  }
+}

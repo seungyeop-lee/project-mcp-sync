@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "asana": {
+      "type": "http",
+      "url": "https://mcp.asana.com/sse",
+      "oauth": {
+        "clientId": "client-abc",
+        "scopes": ["default"]
+      },
+      "alwaysLoad": true,
+      "timeout": 30000
+    }
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "realtime": {
+      "type": "ws",
+      "url": "wss://example.com/mcp"
+    }
+  }
+}
