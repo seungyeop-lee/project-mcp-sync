@@ -21,7 +21,7 @@ type Server struct {
 	BearerTokenEnvVar string
 	HTTPHeaders       map[string]string
 	EnvHTTPHeaders    map[string]string
-	// Other는 sync가 읽지 않는 Codex-only 필드(enabled, required, cwd, timeout류, enabled_tools 등)와 알 수 없는 필드다.
+	// Other는 sync가 읽지 않는 Codex-only 필드(enabled 등)와 알 수 없는 필드다.
 	// 파일 보존은 patcher가 byte 단위로 보장하므로 이 값은 읽기(diff 표시 등) 용도다.
 	Other map[string]any
 }

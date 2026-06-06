@@ -30,10 +30,9 @@ const (
 )
 
 // Plan은 sync 한 번이 수행할 변경의 계산 결과다. 파일은 쓰지 않는다.
-// sync --dry-run의 요약과 diff command의 unified diff가 모두 이 값에서 나온다.
 type Plan struct {
 	root string
-	// File은 변경 대상 파일의 root 기준 상대 경로다 (.codex/config.toml 또는 .mcp.json).
+	// File은 변경 대상 파일의 root 기준 상대 경로다.
 	File string
 	// Old는 현재 파일 내용이다. 파일이 없으면 nil이다.
 	Old []byte

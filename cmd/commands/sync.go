@@ -39,6 +39,7 @@ func NewSyncCmd() *cobra.Command {
 				return err
 			}
 			if opts.dryRun {
+				// dry-run 요약이 skip 사유까지 보여주므로 stderr warning은 따로 내보내지 않는다.
 				printDryRunSummary(cmd.OutOrStdout(), plan)
 				return nil
 			}
@@ -57,7 +58,6 @@ func NewSyncCmd() *cobra.Command {
 }
 
 // printDryRunSummary는 사람이 읽는 미리보기를 출력한다.
-// skip 사유까지 한 곳에 모아 보여주므로 dry-run에서는 stderr warning을 따로 내보내지 않는다.
 func printDryRunSummary(w io.Writer, plan *syncer.Plan) {
 	if !plan.Changed() {
 		fmt.Fprintf(w, "%s is up to date\n", plan.File)
@@ -81,12 +81,10 @@ func printDryRunSummary(w io.Writer, plan *syncer.Plan) {
 	}
 }
 
-// addSourceFlag는 --source 플래그를 등록한다. diff command도 같은 플래그를 쓴다.
 func addSourceFlag(cmd *cobra.Command, target *string) {
 	cmd.Flags().StringVar(target, "source", "", `force the source of truth: "mcp-json" or "codex" (default: auto-detect by file presence)`)
 }
 
-// parseSource는 --source 값을 검증해 syncer.Source로 변환한다. diff command도 같은 규칙을 쓴다.
 func parseSource(value string) (syncer.Source, error) {
 	switch source := syncer.Source(value); source {
 	case syncer.SourceAuto, syncer.SourceMCPJSON, syncer.SourceCodex:
@@ -96,8 +94,6 @@ func parseSource(value string) (syncer.Source, error) {
 	}
 }
 
-// resolveProjectRoot는 --project가 지정되면 그대로 쓰고, 아니면 cwd에서 .git을 탐색해 project root를 찾는다.
-// diff command도 같은 규칙을 쓴다.
 func resolveProjectRoot(projectFlag string) (string, error) {
 	if projectFlag != "" {
 		return projectFlag, nil

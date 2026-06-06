@@ -42,14 +42,14 @@ type File struct {
 }
 
 type Server struct {
-	// Type은 파일에 적힌 값 그대로다. 비어 있으면 EffectiveType이 stdio를 돌려준다.
+	// Type은 파일에 적힌 값 그대로다.
 	Type    string
 	Command string
 	Args    []string
 	Env     map[string]string
 	URL     string
 	Headers map[string]string
-	// ClaudeOnly는 인식된 Claude-only 필드(headersHelper, oauth, alwaysLoad, timeout)다.
+	// ClaudeOnly는 claudeOnlyFields 테이블에 분류된 필드다.
 	ClaudeOnly map[string]json.RawMessage
 	// Unknown은 코어/Claude-only 어느 쪽도 아닌 필드다. 파싱 에러로 만들지 않고 보존한다.
 	Unknown map[string]json.RawMessage

@@ -113,7 +113,6 @@ func ToMCPJSON(srv *codextoml.Server) (out *mcpjson.Server, reason string) {
 	}
 
 	// env 참조 필드를 복원할 수 없으면 인증 정보가 조용히 빠진 .mcp.json이 생기므로 skip이 안전하다.
-	// 서버 종류 불일치, 충돌, 잘못된 변수명이 여기 해당한다.
 	if hasCommand {
 		if srv.BearerTokenEnvVar != "" || len(srv.EnvHTTPHeaders) > 0 {
 			return nil, "stdio server has HTTP-only env-reference fields (bearer_token_env_var, env_http_headers)"

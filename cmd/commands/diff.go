@@ -11,7 +11,6 @@ import (
 )
 
 // ErrDriftDetected는 diff command가 drift를 찾았을 때 돌려주는 에러다.
-// main이 exit code 1로 매핑한다. 에러라기보다 검사 결과이므로 메시지는 출력하지 않는다.
 var ErrDriftDetected = errors.New("drift detected")
 
 type diffOptions struct {
