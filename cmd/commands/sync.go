@@ -45,7 +45,7 @@ func NewSyncCmd() *cobra.Command {
 	}
 
 	cmd.Flags().BoolVar(&opts.dryRun, "dry-run", false, "show what would change without writing files")
-	cmd.Flags().StringVar(&opts.project, "project", "", "project root directory (default: nearest directory containing .git)")
+	cmd.Flags().StringVar(&opts.project, "project", "", "project root directory (default: nearest directory containing .git, falling back to the current directory)")
 
 	return cmd
 }

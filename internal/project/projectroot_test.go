@@ -54,9 +54,29 @@ func TestFindProjectRootReturnsNearest(t *testing.T) {
 	}
 }
 
-func TestFindProjectRootNotFound(t *testing.T) {
-	if _, err := FindProjectRoot(t.TempDir()); err == nil {
-		t.Fatal("FindProjectRoot should fail when no .git exists in any parent")
+// .git을 filesystem root까지 못 찾으면 에러 대신 start 자체를 project root로
+// 사용한다 (cwd fallback)
+func TestFindProjectRootFallsBackToStart(t *testing.T) {
+	start := t.TempDir()
+	got, err := FindProjectRoot(start)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got != start {
+		t.Errorf("FindProjectRoot = %q, want %q", got, start)
+	}
+}
+
+// fallback도 상대경로 입력을 절대경로로 돌려줘야 한다
+func TestFindProjectRootFallbackReturnsAbsolutePath(t *testing.T) {
+	t.Chdir(t.TempDir())
+
+	got, err := FindProjectRoot(".")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !filepath.IsAbs(got) {
+		t.Errorf("FindProjectRoot = %q, want absolute path", got)
 	}
 }
 

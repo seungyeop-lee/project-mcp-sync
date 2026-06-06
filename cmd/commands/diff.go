@@ -49,7 +49,7 @@ func NewDiffCmd() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&opts.project, "project", "", "project root directory (default: nearest directory containing .git)")
+	cmd.Flags().StringVar(&opts.project, "project", "", "project root directory (default: nearest directory containing .git, falling back to the current directory)")
 
 	return cmd
 }

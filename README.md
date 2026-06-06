@@ -26,7 +26,7 @@ project-mcp-sync diff              # drift 검사, unified diff 출력 (파일�
 project-mcp-sync completion zsh    # shell completion (zsh/bash/fish)
 ```
 
-project root는 현재 디렉토리에서 가장 가까운 `.git` 기준으로 찾는다. `--project <dir>`로 직접 지정할 수 있다.
+project root는 현재 디렉토리에서 가장 가까운 `.git` 기준으로 찾고, `.git`이 없으면 현재 디렉토리를 그대로 사용한다. `--project <dir>`로 직접 지정할 수 있다.
 
 ## Exit codes
 
