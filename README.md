@@ -17,6 +17,8 @@ shell completion(zsh/bash/fish)은 Homebrew completion 경로에 함께 설치�
 - 둘 다 없으면 오류.
 - 변환할 수 없는 서버(type이 `ws`/`sse`, `headersHelper`/`oauth` 사용, 변환 매트릭스 밖의 `${VAR}` 패턴)는 skip하고 warning을 출력한다. skip된 서버와 동명인 기존 Codex 테이블은 건드리지 않는다.
 
+source of truth 판별, 필드 단위 merge, `${VAR}` 변환 매트릭스, skip 규칙의 상세 정책은 [docs/behavior.md](docs/behavior.md)를 참조한다.
+
 ## 사용법
 
 ```sh
@@ -42,15 +44,3 @@ CI나 pre-commit hook에서 drift를 검사할 때는 `diff` command를 사용�
 # pre-commit 예시: drift가 있으면 commit을 막는다
 project-mcp-sync diff || exit 1
 ```
-
-## ${VAR} 변환 매트릭스
-
-`.mcp.json`의 안전한 `${VAR}` 패턴은 Codex의 env 참조 필드와 양방향 변환된다.
-
-| .mcp.json | .codex/config.toml |
-|---|---|
-| headers의 `"Authorization": "Bearer ${TOKEN}"` | `bearer_token_env_var = "TOKEN"` |
-| 헤더 값 전체가 `"${VAR}"` | `env_http_headers = { "<헤더>" = "VAR" }` |
-| stdio env의 동명 passthrough `"KEY": "${KEY}"` | `env_vars = ["KEY"]` |
-
-매트릭스 밖 패턴(url 중간 삽입, `${VAR:-default}`, 문자열 조합, command/args 안의 `${VAR}`)은 해당 서버를 skip + warning 처리한다.
