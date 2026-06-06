@@ -1,0 +1,24 @@
+{
+  "mcpServers": {
+    "api": {
+      "headers": {
+        "Authorization": "Bearer ${API_TOKEN}",
+        "Notion-Version": "2022-06-28",
+        "X-Api-Key": "${API_KEY}"
+      },
+      "type": "http",
+      "url": "https://api.example.com/mcp"
+    },
+    "runner": {
+      "args": [
+        "-y",
+        "runner-mcp"
+      ],
+      "command": "npx",
+      "env": {
+        "GITHUB_TOKEN": "${GITHUB_TOKEN}",
+        "MODE": "fast"
+      }
+    }
+  }
+}

@@ -46,3 +46,23 @@ func TestClassify(t *testing.T) {
 		}
 	}
 }
+
+func TestValidName(t *testing.T) {
+	cases := []struct {
+		name string
+		want bool
+	}{
+		{"TOKEN", true},
+		{"_PRIVATE_VAR1", true},
+		{"", false},
+		{"1BAD", false},
+		{"BAD-NAME", false},
+		{"${TOKEN}", false},
+		{"A B", false},
+	}
+	for _, tc := range cases {
+		if got := ValidName(tc.name); got != tc.want {
+			t.Errorf("ValidName(%q) = %v, want %v", tc.name, got, tc.want)
+		}
+	}
+}

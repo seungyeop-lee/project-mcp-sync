@@ -42,7 +42,13 @@ type Ref struct {
 	Var  string
 }
 
-var fullVarRe = regexp.MustCompile(`^\$\{([A-Za-z_][A-Za-z0-9_]*)\}$`)
+// 환경변수 이름 형태. POSIX 식별자만 안전 변환 대상으로 본다.
+const namePattern = `[A-Za-z_][A-Za-z0-9_]*`
+
+var (
+	fullVarRe = regexp.MustCompile(`^\$\{(` + namePattern + `)\}$`)
+	nameRe    = regexp.MustCompile(`^` + namePattern + `$`)
+)
 
 func Classify(value string) Ref {
 	if !strings.Contains(value, "${") {
@@ -57,4 +63,10 @@ func Classify(value string) Ref {
 		}
 	}
 	return Ref{Kind: Unsupported}
+}
+
+// ValidName은 name이 환경변수 이름 형태인지 검사한다. codex의 env 참조 필드 값
+// (bearer_token_env_var 등)을 ${name}으로 복원하기 전 검증에 사용한다.
+func ValidName(name string) bool {
+	return nameRe.MatchString(name)
 }

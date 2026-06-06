@@ -5,8 +5,11 @@ import (
 	"flag"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/seungyeop-lee/project-mcp-sync/internal/mcpjson"
 )
 
 func TestSyncUpdatesCodexFromMCPJSON(t *testing.T) {
@@ -121,6 +124,65 @@ func TestSyncSkipsUnconvertibleServers(t *testing.T) {
 	}
 	// skip한 envy의 기존 테이블(주석 포함)은 그대로, good만 추가된다
 	checkGolden(t, "codex_after_skip.toml", readFile(t, root, ".codex/config.toml"))
+}
+
+// ${VAR} 안전 패턴(Authorization bearer, 전체 변수 헤더, 동명 env passthrough)은
+// codex의 env 참조 필드(bearer_token_env_var, env_http_headers, env_vars)로 변환된다.
+func TestSyncMatrixPatternsToCodex(t *testing.T) {
+	root := setupProject(t, map[string]string{
+		".mcp.json": "mcp_matrix.json",
+	})
+	res, err := Run(root, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(res.Warnings) != 0 {
+		t.Errorf("Warnings = %v, want none", res.Warnings)
+	}
+	checkGolden(t, "codex_matrix_created.toml", readFile(t, root, ".codex/config.toml"))
+}
+
+func TestSyncMatrixPatternsToMCPJSON(t *testing.T) {
+	root := setupProject(t, map[string]string{
+		".codex/config.toml": "codex_matrix.toml",
+	})
+	res, err := Run(root, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(res.Warnings) != 0 {
+		t.Errorf("Warnings = %v, want none", res.Warnings)
+	}
+	checkGolden(t, "mcp_matrix_generated.json", readFile(t, root, ".mcp.json"))
+}
+
+// .mcp.json -> .codex/config.toml -> .mcp.json round-trip에서 매트릭스 패턴의
+// 의미가 보존되는지 확인한다. 비교는 byte가 아니라 파싱된 모델로 한다.
+func TestSyncMatrixRoundTrip(t *testing.T) {
+	root := setupProject(t, map[string]string{
+		".mcp.json": "mcp_matrix.json",
+	})
+	if _, err := Run(root, false); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Remove(filepath.Join(root, ".mcp.json")); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := Run(root, false); err != nil {
+		t.Fatal(err)
+	}
+
+	got, err := mcpjson.Parse(readFile(t, root, ".mcp.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	want, err := mcpjson.Parse(readFixture(t, "mcp_matrix.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("round-trip changed meaning\n got = %#v\nwant = %#v", got, want)
+	}
 }
 
 func TestSyncDryRunWritesNothing(t *testing.T) {
