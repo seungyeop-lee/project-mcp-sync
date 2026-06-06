@@ -21,11 +21,22 @@ func TestSyncUpdatesCodexFromMCPJSON(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !res.Changed {
+	if !res.Changed() {
 		t.Error("Changed = false, want true")
 	}
 	if len(res.Warnings) != 0 {
 		t.Errorf("Warnings = %v, want none", res.Warnings)
+	}
+	// notion은 codex에 없던 서버, context7은 값이 달라진 서버, legacy는 source에서
+	// 사라진 서버다
+	if !reflect.DeepEqual(res.Adds, []string{"notion"}) {
+		t.Errorf("Adds = %v, want [notion]", res.Adds)
+	}
+	if !reflect.DeepEqual(res.Updates, []string{"context7"}) {
+		t.Errorf("Updates = %v, want [context7]", res.Updates)
+	}
+	if !reflect.DeepEqual(res.Deletes, []string{"legacy"}) {
+		t.Errorf("Deletes = %v, want [legacy]", res.Deletes)
 	}
 	checkGolden(t, "codex_after_update.toml", readFile(t, root, ".codex/config.toml"))
 
@@ -39,7 +50,7 @@ func TestSyncUpdatesCodexFromMCPJSON(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res2.Changed {
+	if res2.Changed() {
 		t.Error("second run must report Changed = false")
 	}
 }
@@ -52,7 +63,7 @@ func TestSyncCreatesCodexWhenMissing(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !res.Changed {
+	if !res.Changed() {
 		t.Error("Changed = false, want true")
 	}
 	checkGolden(t, "codex_created.toml", readFile(t, root, ".codex/config.toml"))
@@ -66,7 +77,7 @@ func TestSyncGeneratesMCPJSONFromCodex(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !res.Changed {
+	if !res.Changed() {
 		t.Error("Changed = false, want true")
 	}
 	checkGolden(t, "mcp_generated.json", readFile(t, root, ".mcp.json"))
@@ -96,7 +107,7 @@ func TestSyncEmptyMCPJSONClearsCodexServers(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			if !res.Changed {
+			if !res.Changed() {
 				t.Error("Changed = false, want true")
 			}
 			checkGolden(t, "codex_after_empty.toml", readFile(t, root, ".codex/config.toml"))
@@ -194,7 +205,7 @@ func TestSyncDryRunWritesNothing(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !res.Changed {
+	if !res.Changed() {
 		t.Error("dry-run must still report Changed = true")
 	}
 	if !bytes.Equal(readFile(t, root, ".codex/config.toml"), readFixture(t, "codex_basic.toml")) {

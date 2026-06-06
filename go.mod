@@ -3,6 +3,7 @@ module github.com/seungyeop-lee/project-mcp-sync
 go 1.26.4
 
 require (
+	github.com/aymanbagabas/go-udiff v0.4.1
 	github.com/pelletier/go-toml/v2 v2.3.1
 	github.com/spf13/cobra v1.10.2
 )

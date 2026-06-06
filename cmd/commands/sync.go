@@ -2,6 +2,7 @@ package commands
 
 import (
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -28,11 +29,15 @@ func NewSyncCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			res, err := syncer.Run(root, opts.dryRun)
+			plan, err := syncer.Run(root, opts.dryRun)
 			if err != nil {
 				return err
 			}
-			for _, warning := range res.Warnings {
+			if opts.dryRun {
+				printDryRunSummary(cmd.OutOrStdout(), plan)
+				return nil
+			}
+			for _, warning := range plan.Warnings {
 				fmt.Fprintln(cmd.ErrOrStderr(), "warning: "+warning)
 			}
 			return nil
@@ -43,6 +48,31 @@ func NewSyncCmd() *cobra.Command {
 	cmd.Flags().StringVar(&opts.project, "project", "", "project root directory (default: nearest directory containing .git)")
 
 	return cmd
+}
+
+// printDryRunSummary는 사람이 읽는 미리보기를 출력한다. skip 사유까지 한 곳에
+// 모아 보여주므로 dry-run에서는 stderr warning을 따로 내보내지 않는다.
+func printDryRunSummary(w io.Writer, plan *syncer.Plan) {
+	if !plan.Changed() {
+		fmt.Fprintf(w, "%s is up to date\n", plan.File)
+	} else {
+		fmt.Fprintf(w, "would update %s:\n", plan.File)
+		for _, name := range plan.Adds {
+			fmt.Fprintf(w, "  add    %s\n", name)
+		}
+		for _, name := range plan.Updates {
+			fmt.Fprintf(w, "  update %s\n", name)
+		}
+		for _, name := range plan.Deletes {
+			fmt.Fprintf(w, "  delete %s\n", name)
+		}
+	}
+	if len(plan.Warnings) > 0 {
+		fmt.Fprintln(w, "warnings:")
+		for _, warning := range plan.Warnings {
+			fmt.Fprintf(w, "  %s\n", warning)
+		}
+	}
 }
 
 // resolveProjectRoot는 --project가 지정되면 그대로 쓰고, 아니면 cwd에서 .git을

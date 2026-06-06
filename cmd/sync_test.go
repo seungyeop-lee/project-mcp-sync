@@ -66,6 +66,40 @@ func TestSyncDryRunWritesNoFiles(t *testing.T) {
 	}
 }
 
+// drift가 있어도 dry-run은 검사 모드가 아니므로 성공(exit 0)이고,
+// 변경 요약과 skip warning을 stdout으로 출력한다
+func TestSyncDryRunPrintsSummary(t *testing.T) {
+	dir := t.TempDir()
+	writeTestFile(t, dir, ".mcp.json",
+		`{"mcpServers": {"good": {"command": "npx"}, "envy": {"type": "http", "url": "${API_BASE}/mcp"}}}`)
+
+	out, err := execute(t, "sync", "--dry-run", "--project", dir)
+	if err != nil {
+		t.Fatalf("dry-run must succeed even when drift exists: %v", err)
+	}
+	for _, want := range []string{"would update .codex/config.toml", "add    good", "envy"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("dry-run output missing %q\noutput:\n%s", want, out)
+		}
+	}
+}
+
+func TestSyncDryRunReportsUpToDate(t *testing.T) {
+	dir := t.TempDir()
+	writeTestFile(t, dir, ".mcp.json", `{"mcpServers": {"good": {"command": "npx"}}}`)
+	if _, err := executeSync(t, "sync", "--project", dir); err != nil {
+		t.Fatal(err)
+	}
+
+	out, err := execute(t, "sync", "--dry-run", "--project", dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out, "up to date") {
+		t.Errorf("output = %q, want up-to-date message", out)
+	}
+}
+
 // executeSync는 stderr를 돌려준다. warning 출력 검증용.
 func executeSync(t *testing.T, args ...string) (string, error) {
 	t.Helper()
