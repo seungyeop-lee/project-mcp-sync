@@ -28,6 +28,7 @@ project-mcp-sync sync              # synchronize
 project-mcp-sync sync --dry-run    # print a change summary only, write no files
 project-mcp-sync diff              # check for drift, print a unified diff (writes no files)
 project-mcp-sync completion zsh    # shell completion (zsh/bash/fish)
+project-mcp-sync --version         # print the current version
 ```
 
 The project root is found from the current directory by looking for the nearest `.git`; if there is no `.git`, the current directory is used as-is. You can specify it directly with `--project <dir>`.

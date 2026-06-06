@@ -5,6 +5,8 @@ import (
 	"io"
 	"strings"
 	"testing"
+
+	"github.com/seungyeop-lee/project-mcp-sync/internal/version"
 )
 
 func TestRootCommandSurface(t *testing.T) {
@@ -24,6 +26,16 @@ func TestRootCommandSurface(t *testing.T) {
 		if visible[i] != want[i] {
 			t.Fatalf("visible commands = %v, want %v", visible, want)
 		}
+	}
+}
+
+func TestVersionFlagPrintsVersion(t *testing.T) {
+	out, err := execute(t, "--version")
+	if err != nil {
+		t.Fatalf("--version failed: %v", err)
+	}
+	if !strings.Contains(out, version.Version) {
+		t.Errorf("--version output %q does not contain %s", out, version.Version)
 	}
 }
 

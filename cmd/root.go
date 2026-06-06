@@ -4,6 +4,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/seungyeop-lee/project-mcp-sync/cmd/commands"
+	"github.com/seungyeop-lee/project-mcp-sync/internal/version"
 )
 
 func NewRootCmd() *cobra.Command {
@@ -11,6 +12,7 @@ func NewRootCmd() *cobra.Command {
 		Use:           "project-mcp-sync",
 		Short:         "Sync project-scoped MCP server definitions between Claude Code and Codex",
 		Long:          "Sync project-scoped MCP server definitions between Claude Code's .mcp.json and Codex's .codex/config.toml.",
+		Version:       version.Version,
 		SilenceUsage:  true,
 		SilenceErrors: false,
 	}

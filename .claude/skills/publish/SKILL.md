@@ -1,6 +1,6 @@
 ---
 name: publish
-description: project-mcp-sync 새 버전을 release한다. 최신 semver tag에서 다음 버전을 계산해 tag 생성·push 후 homebrew-tap formula(url/sha256)를 갱신하고 commit·push까지 진행한다. patch|minor|major 인자가 필요하다.
+description: project-mcp-sync 새 버전을 release한다. 최신 semver tag에서 다음 버전을 계산해 버전 상수 bump commit과 tag 생성·push 후 homebrew-tap formula(url/sha256)를 갱신하고 commit·push까지 진행한다. patch|minor|major 인자가 필요하다.
 argument-hint: patch|minor|major
 disable-model-invocation: true
 ---
@@ -42,16 +42,25 @@ git tag --list 'v*' --sort=-v:refname | head -1
 - tag가 하나도 없으면 중단하고 시작 버전을 질문한다.
 - 계산한 버전은 진행 로그로 사용자에게 알린다 (예: `v0.1.0 → v0.1.1`).
 
-## 3. tag 생성·push
+## 3. 버전 상수 갱신·commit
+
+`internal/version/version.go`의 `Version` 상수를 `v<NEW>`로 갱신하고 commit한다. `--version` 출력이 tag와 일치하도록 tag는 반드시 이 commit에 생성해야 한다.
+
+```sh
+git add internal/version/version.go
+git commit -m 'chore: bump version to v<NEW>'
+```
+
+## 4. tag 생성·push
 
 ```sh
 git tag v<NEW>
 git push origin main v<NEW>
 ```
 
-push가 실패하면 로컬 tag를 삭제(`git tag -d v<NEW>`)하고 중단한다.
+push가 실패하면 로컬 tag를 삭제(`git tag -d v<NEW>`)하고, 버전 bump commit을 되돌린(`git reset --hard HEAD^`) 뒤 중단한다 (1단계에서 clean tree를 확인했으므로 bump commit만 사라진다).
 
-## 4. tarball sha256 계산
+## 5. tarball sha256 계산
 
 ```sh
 curl -fsSL -o <tmpfile> https://github.com/seungyeop-lee/project-mcp-sync/archive/refs/tags/v<NEW>.tar.gz
@@ -62,17 +71,17 @@ shasum -a 256 <tmpfile>
   간격으로 최대 5회 재시도한다.
 - 받은 파일이 정상 tar.gz인지 `tar -tzf`로 확인한 뒤 sha256을 계산한다.
 
-## 5. formula 갱신
+## 6. formula 갱신
 
 `../homebrew-tap/project-mcp-sync.rb`에서 두 줄만 수정한다. version 필드는 따로
 없고 url에서 자동 추출되므로 다른 줄은 건드리지 않는다.
 
 ```ruby
 url "https://github.com/seungyeop-lee/project-mcp-sync/archive/refs/tags/v<NEW>.tar.gz"
-sha256 "<4단계에서 계산한 값>"
+sha256 "<5단계에서 계산한 값>"
 ```
 
-## 6. tap commit·push
+## 7. tap commit·push
 
 ```sh
 git -C ../homebrew-tap add project-mcp-sync.rb
@@ -80,7 +89,7 @@ git -C ../homebrew-tap commit -m 'Brew formula update for project-mcp-sync versi
 git -C ../homebrew-tap push origin main
 ```
 
-## 7. 완료 보고
+## 8. 완료 보고
 
 - 새 버전, tarball sha256, project/tap 양쪽 commit·tag를 요약한다.
 - 설치 머신에서의 업그레이드 명령을 안내한다: `brew update && brew upgrade project-mcp-sync`

@@ -28,6 +28,7 @@ project-mcp-sync sync              # 동기화
 project-mcp-sync sync --dry-run    # 변경 요약만 출력, 파일은 쓰지 않음
 project-mcp-sync diff              # drift 검사, unified diff 출력 (파일을 쓰지 않음)
 project-mcp-sync completion zsh    # shell completion (zsh/bash/fish)
+project-mcp-sync --version         # 현재 버전 출력
 ```
 
 project root는 현재 디렉토리에서 가장 가까운 `.git` 기준으로 찾고, `.git`이 없으면 현재 디렉토리를 그대로 사용한다. `--project <dir>`로 직접 지정할 수 있다.
