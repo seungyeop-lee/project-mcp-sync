@@ -65,8 +65,8 @@ func Classify(value string) Ref {
 	return Ref{Kind: Unsupported}
 }
 
-// ValidName은 name이 환경변수 이름 형태인지 검사한다. codex의 env 참조 필드 값
-// (bearer_token_env_var 등)을 ${name}으로 복원하기 전 검증에 사용한다.
+// ValidName은 name이 환경변수 이름 형태인지 검사한다.
+// codex의 env 참조 필드 값(bearer_token_env_var 등)을 ${name}으로 복원하기 전 검증에 사용한다.
 func ValidName(name string) bool {
 	return nameRe.MatchString(name)
 }

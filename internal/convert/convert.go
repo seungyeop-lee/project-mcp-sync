@@ -1,13 +1,11 @@
-// Package convert는 .mcp.json 서버와 .codex/config.toml 서버 사이의
-// 서버 단위 변환과 변환 불가(skip) 판정을 제공한다.
+// Package convert는 .mcp.json 서버와 .codex/config.toml 서버 사이의 서버 단위 변환과 변환 불가(skip) 판정을 제공한다.
 //
 // ${VAR} 안전 패턴은 양방향 매트릭스로 변환한다:
 //   - headers의 Authorization "Bearer ${TOKEN}" <-> bearer_token_env_var = "TOKEN"
 //   - 헤더 값 전체가 "${VAR}" <-> env_http_headers = { "<헤더>" = "VAR" }
 //   - stdio env의 동명 passthrough "KEY": "${KEY}" <-> env_vars = ["KEY"]
 //
-// 매트릭스 밖 ${...} 패턴(문자열 중간 삽입, ${VAR:-default}, 문자열 조합,
-// command/args/url 내 참조)은 변환하지 않고 skip 사유를 돌려준다.
+// 매트릭스 밖 ${...} 패턴(문자열 중간 삽입, ${VAR:-default}, 문자열 조합, command/args/url 내 참조)은 변환하지 않고 skip 사유를 돌려준다.
 package convert
 
 import (
@@ -116,8 +114,8 @@ func ToMCPJSON(srv *codextoml.Server) (out *mcpjson.Server, reason string) {
 		}
 	}
 
-	// env 참조 필드를 복원할 수 없으면 인증 정보가 조용히 빠진 .mcp.json이 생기므로
-	// skip이 안전하다. 서버 종류 불일치, 충돌, 잘못된 변수명이 여기 해당한다.
+	// env 참조 필드를 복원할 수 없으면 인증 정보가 조용히 빠진 .mcp.json이 생기므로 skip이 안전하다.
+	// 서버 종류 불일치, 충돌, 잘못된 변수명이 여기 해당한다.
 	if hasCommand {
 		if srv.BearerTokenEnvVar != "" || len(srv.EnvHTTPHeaders) > 0 {
 			return nil, "stdio server has HTTP-only env-reference fields (bearer_token_env_var, env_http_headers)"
@@ -151,8 +149,8 @@ func RemoveList(set map[string]any) []string {
 	return remove
 }
 
-// sync가 소유하는 codex 테이블 필드. 여기 없는 필드(enabled, timeout류 등)는
-// Codex-only로 간주해 건드리지 않는다.
+// sync가 소유하는 codex 테이블 필드.
+// 여기 없는 필드(enabled, timeout류 등)는 Codex-only로 간주해 건드리지 않는다.
 var managedFields = []string{
 	"command", "args", "env", "env_vars",
 	"url", "bearer_token_env_var", "http_headers", "env_http_headers",
@@ -178,10 +176,9 @@ func splitEnv(in map[string]string) (env map[string]string, envVars []string, re
 	return env, envVars, ""
 }
 
-// splitHeaders는 .mcp.json headers를 리터럴(http_headers), 값 전체 변수 참조
-// (env_http_headers), Authorization bearer 변수(bearer_token_env_var)로 나눈다.
-// "Bearer ${VAR}"는 Authorization 헤더에서만 변환할 수 있다. codex의
-// bearer_token_env_var가 Authorization 헤더만 만들기 때문이다.
+// splitHeaders는 .mcp.json headers를 리터럴(http_headers), 값 전체 변수 참조(env_http_headers), Authorization bearer 변수(bearer_token_env_var)로 나눈다.
+// "Bearer ${VAR}"는 Authorization 헤더에서만 변환할 수 있다.
+// codex의 bearer_token_env_var가 Authorization 헤더만 만들기 때문이다.
 func splitHeaders(in map[string]string) (headers, envHeaders map[string]string, bearerVar, reason string) {
 	for _, key := range sortedKeys(in) {
 		value := in[key]
@@ -206,9 +203,8 @@ func splitHeaders(in map[string]string) (headers, envHeaders map[string]string, 
 	return headers, envHeaders, bearerVar, ""
 }
 
-// mergeEnvVars는 codex env_vars의 각 항목을 동명 passthrough("KEY": "${KEY}")로
-// 복원해 env에 합친다. 같은 키를 두 곳에서 정의하면 어느 쪽이 이길지 알 수 없으므로
-// skip한다.
+// mergeEnvVars는 codex env_vars의 각 항목을 동명 passthrough("KEY": "${KEY}")로 복원해 env에 합친다.
+// 같은 키를 두 곳에서 정의하면 어느 쪽이 이길지 알 수 없으므로 skip한다.
 func mergeEnvVars(env map[string]string, envVars []string) (map[string]string, string) {
 	if len(envVars) == 0 {
 		return env, ""

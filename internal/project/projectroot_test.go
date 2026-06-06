@@ -54,8 +54,7 @@ func TestFindProjectRootReturnsNearest(t *testing.T) {
 	}
 }
 
-// .git을 filesystem root까지 못 찾으면 에러 대신 start 자체를 project root로
-// 사용한다 (cwd fallback)
+// .git을 filesystem root까지 못 찾으면 에러 대신 start 자체를 project root로 사용한다 (cwd fallback)
 func TestFindProjectRootFallsBackToStart(t *testing.T) {
 	start := t.TempDir()
 	got, err := FindProjectRoot(start)

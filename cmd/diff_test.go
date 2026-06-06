@@ -10,8 +10,7 @@ import (
 	"github.com/seungyeop-lee/project-mcp-sync/cmd/commands"
 )
 
-// drift가 있으면 unified diff를 출력하고 ErrDriftDetected를 돌려줘야
-// main이 exit 1로 매핑한다
+// drift가 있으면 unified diff를 출력하고 ErrDriftDetected를 돌려줘야 main이 exit 1로 매핑한다
 func TestDiffReportsDriftWithUnifiedDiff(t *testing.T) {
 	dir := t.TempDir()
 	writeTestFile(t, dir, ".mcp.json", `{"mcpServers": {"good": {"command": "npx"}}}`)

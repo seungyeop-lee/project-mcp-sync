@@ -15,8 +15,8 @@ func NewRootCmd() *cobra.Command {
 		SilenceErrors: false,
 	}
 
-	// command surface는 sync, completion만 둔다. Cobra 기본 completion command는
-	// powershell까지 노출하므로 비활성화하고 zsh/bash/fish만 받는 custom command를 등록한다.
+	// command surface는 sync, completion만 둔다.
+	// Cobra 기본 completion command는 powershell까지 노출하므로 비활성화하고 zsh/bash/fish만 받는 custom command를 등록한다.
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
 
 	rootCmd.AddCommand(commands.NewSyncCmd())

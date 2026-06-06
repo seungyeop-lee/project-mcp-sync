@@ -177,8 +177,7 @@ env = { CONTEXT7_API_KEY = "secret" }
 	}
 }
 
-// dotted key(env.A = ...)와 sub-table([mcp_servers.x.http_headers]) 표기도
-// 코어 필드 갱신 시 inline table 한 줄로 합쳐져야 한다.
+// dotted key(env.A = ...)와 sub-table([mcp_servers.x.http_headers]) 표기도 코어 필드 갱신 시 inline table 한 줄로 합쳐져야 한다.
 func TestUpsertNormalizesDottedAndSubTable(t *testing.T) {
 	src := `[mcp_servers.x]
 command = "a"

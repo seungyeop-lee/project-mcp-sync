@@ -48,8 +48,7 @@ func TestToCodexHTTPServer(t *testing.T) {
 	}
 }
 
-// alwaysLoad, timeout 같은 Claude-only 필드는 .mcp.json에만 남고
-// 변환 자체는 막지 않는다 (skip 대상은 headersHelper, oauth뿐).
+// alwaysLoad, timeout 같은 Claude-only 필드는 .mcp.json에만 남고 변환 자체는 막지 않는다 (skip 대상은 headersHelper, oauth뿐).
 func TestToCodexAllowsHarmlessClaudeOnlyFields(t *testing.T) {
 	set, reason := ToCodex(&mcpjson.Server{
 		Command: "npx",
@@ -275,8 +274,7 @@ func TestToMCPJSONSkips(t *testing.T) {
 	}{
 		{"both command and url", &codextoml.Server{Command: "npx", URL: "https://example.com"}},
 		{"neither command nor url", &codextoml.Server{}},
-		// codex의 리터럴 ${...} 값을 .mcp.json으로 옮기면 Claude가 환경변수로 확장해
-		// 의미가 달라지므로 skip한다
+		// codex의 리터럴 ${...} 값을 .mcp.json으로 옮기면 Claude가 환경변수로 확장해 의미가 달라지므로 skip한다
 		{"literal var in env", &codextoml.Server{Command: "npx", Env: map[string]string{"KEY": "${KEY}"}}},
 		{"literal var in header", &codextoml.Server{URL: "https://example.com", HTTPHeaders: map[string]string{"X-Key": "${API_KEY}"}}},
 	}
@@ -352,8 +350,7 @@ func TestToMCPJSONEnvRefFields(t *testing.T) {
 	}
 }
 
-// env 참조 필드를 복원할 수 없으면 인증 정보가 조용히 빠진 .mcp.json이 생기므로
-// skip해야 한다.
+// env 참조 필드를 복원할 수 없으면 인증 정보가 조용히 빠진 .mcp.json이 생기므로 skip해야 한다.
 func TestToMCPJSONEnvRefFieldSkips(t *testing.T) {
 	cases := []struct {
 		name string
@@ -406,8 +403,7 @@ func TestToMCPJSONEnvRefFieldSkips(t *testing.T) {
 	}
 }
 
-// source에 더 이상 없는 매트릭스 필드(bearer_token_env_var 등)도 제거 대상에
-// 들어가야 stale한 인증 설정이 codex 테이블에 남지 않는다.
+// source에 더 이상 없는 매트릭스 필드(bearer_token_env_var 등)도 제거 대상에 들어가야 stale한 인증 설정이 codex 테이블에 남지 않는다.
 func TestRemoveListCoversAllManagedFieldsNotSet(t *testing.T) {
 	remove := RemoveList(map[string]any{
 		"url":          "https://example.com",

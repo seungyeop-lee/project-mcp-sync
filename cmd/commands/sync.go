@@ -50,8 +50,8 @@ func NewSyncCmd() *cobra.Command {
 	return cmd
 }
 
-// printDryRunSummary는 사람이 읽는 미리보기를 출력한다. skip 사유까지 한 곳에
-// 모아 보여주므로 dry-run에서는 stderr warning을 따로 내보내지 않는다.
+// printDryRunSummary는 사람이 읽는 미리보기를 출력한다.
+// skip 사유까지 한 곳에 모아 보여주므로 dry-run에서는 stderr warning을 따로 내보내지 않는다.
 func printDryRunSummary(w io.Writer, plan *syncer.Plan) {
 	if !plan.Changed() {
 		fmt.Fprintf(w, "%s is up to date\n", plan.File)
@@ -75,8 +75,8 @@ func printDryRunSummary(w io.Writer, plan *syncer.Plan) {
 	}
 }
 
-// resolveProjectRoot는 --project가 지정되면 그대로 쓰고, 아니면 cwd에서 .git을
-// 탐색해 project root를 찾는다. diff command도 같은 규칙을 쓴다.
+// resolveProjectRoot는 --project가 지정되면 그대로 쓰고, 아니면 cwd에서 .git을 탐색해 project root를 찾는다.
+// diff command도 같은 규칙을 쓴다.
 func resolveProjectRoot(projectFlag string) (string, error) {
 	if projectFlag != "" {
 		return projectFlag, nil

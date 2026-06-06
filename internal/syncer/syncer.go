@@ -1,5 +1,4 @@
-// Package syncer는 project root의 .mcp.json과 .codex/config.toml 사이에서
-// MCP 서버 정의를 동기화하는 sync 코어다.
+// Package syncer는 project root의 .mcp.json과 .codex/config.toml 사이에서 MCP 서버 정의를 동기화하는 sync 코어다.
 package syncer
 
 import (
@@ -55,8 +54,8 @@ func Run(root string, dryRun bool) (*Plan, error) {
 }
 
 // Compute는 파일을 쓰지 않고 sync 계획만 계산한다.
-// .mcp.json이 있으면 그것이 source of truth이고, 없으면 .codex/config.toml에서
-// .mcp.json을 생성한다. 둘 다 없으면 에러다.
+// .mcp.json이 있으면 그것이 source of truth이고, 없으면 .codex/config.toml에서 .mcp.json을 생성한다.
+// 둘 다 없으면 에러다.
 func Compute(root string) (*Plan, error) {
 	mcpData, mcpExists, err := readIfExists(filepath.Join(root, mcpFileName))
 	if err != nil {
@@ -89,8 +88,7 @@ func (p *Plan) Apply() error {
 	return writeFile(filepath.Join(p.root, filepath.FromSlash(p.File)), p.New)
 }
 
-// planCodexUpdate는 .mcp.json을 source로 .codex/config.toml의 MCP section을
-// 갱신하는 계획을 계산한다.
+// planCodexUpdate는 .mcp.json을 source로 .codex/config.toml의 MCP section을 갱신하는 계획을 계산한다.
 func planCodexUpdate(root string, mcpData, codexData []byte) (*Plan, error) {
 	mcpFile, err := mcpjson.Parse(mcpData)
 	if err != nil {
@@ -119,8 +117,8 @@ func planCodexUpdate(root string, mcpData, codexData []byte) (*Plan, error) {
 			return nil, err
 		}
 	}
-	// source에서 사라진 서버는 테이블 통째 삭제. skip한 서버는 source에 남아 있으므로
-	// 여기 걸리지 않는다 (동명 기존 테이블 보존).
+	// source에서 사라진 서버는 테이블 통째 삭제.
+	// skip한 서버는 source에 남아 있으므로 여기 걸리지 않는다 (동명 기존 테이블 보존).
 	for _, name := range before.Names() {
 		if _, ok := mcpFile.Servers[name]; !ok {
 			if err := doc.Delete(name); err != nil {
@@ -146,8 +144,8 @@ func planCodexUpdate(root string, mcpData, codexData []byte) (*Plan, error) {
 	return plan, nil
 }
 
-// planMCPJSONCreate는 .mcp.json이 없을 때 .codex/config.toml에서 .mcp.json을
-// 생성하는 계획을 계산한다. codex 파일은 수정하지 않는다.
+// planMCPJSONCreate는 .mcp.json이 없을 때 .codex/config.toml에서 .mcp.json을 생성하는 계획을 계산한다.
+// codex 파일은 수정하지 않는다.
 func planMCPJSONCreate(root string, codexData []byte) (*Plan, error) {
 	doc, err := codextoml.Parse(codexData)
 	if err != nil {

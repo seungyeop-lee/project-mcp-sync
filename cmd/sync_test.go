@@ -66,8 +66,7 @@ func TestSyncDryRunWritesNoFiles(t *testing.T) {
 	}
 }
 
-// drift가 있어도 dry-run은 검사 모드가 아니므로 성공(exit 0)이고,
-// 변경 요약과 skip warning을 stdout으로 출력한다
+// drift가 있어도 dry-run은 검사 모드가 아니므로 성공(exit 0)이고, 변경 요약과 skip warning을 stdout으로 출력한다
 func TestSyncDryRunPrintsSummary(t *testing.T) {
 	dir := t.TempDir()
 	writeTestFile(t, dir, ".mcp.json",

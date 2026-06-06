@@ -27,8 +27,7 @@ func TestSyncUpdatesCodexFromMCPJSON(t *testing.T) {
 	if len(res.Warnings) != 0 {
 		t.Errorf("Warnings = %v, want none", res.Warnings)
 	}
-	// notion은 codex에 없던 서버, context7은 값이 달라진 서버, legacy는 source에서
-	// 사라진 서버다
+	// notion은 codex에 없던 서버, context7은 값이 달라진 서버, legacy는 source에서 사라진 서버다
 	if !reflect.DeepEqual(res.Adds, []string{"notion"}) {
 		t.Errorf("Adds = %v, want [notion]", res.Adds)
 	}
@@ -88,8 +87,8 @@ func TestSyncGeneratesMCPJSONFromCodex(t *testing.T) {
 	}
 }
 
-// 빈 .mcp.json도 source of truth다. mcpServers가 없거나 {}이면 codex의
-// MCP 테이블을 모두 비우되 비-MCP 설정은 남긴다.
+// 빈 .mcp.json도 source of truth다.
+// mcpServers가 없거나 {}이면 codex의 MCP 테이블을 모두 비우되 비-MCP 설정은 남긴다.
 func TestSyncEmptyMCPJSONClearsCodexServers(t *testing.T) {
 	for _, tc := range []struct {
 		name    string
@@ -137,8 +136,7 @@ func TestSyncSkipsUnconvertibleServers(t *testing.T) {
 	checkGolden(t, "codex_after_skip.toml", readFile(t, root, ".codex/config.toml"))
 }
 
-// ${VAR} 안전 패턴(Authorization bearer, 전체 변수 헤더, 동명 env passthrough)은
-// codex의 env 참조 필드(bearer_token_env_var, env_http_headers, env_vars)로 변환된다.
+// ${VAR} 안전 패턴(Authorization bearer, 전체 변수 헤더, 동명 env passthrough)은 codex의 env 참조 필드(bearer_token_env_var, env_http_headers, env_vars)로 변환된다.
 func TestSyncMatrixPatternsToCodex(t *testing.T) {
 	root := setupProject(t, map[string]string{
 		".mcp.json": "mcp_matrix.json",
@@ -167,8 +165,8 @@ func TestSyncMatrixPatternsToMCPJSON(t *testing.T) {
 	checkGolden(t, "mcp_matrix_generated.json", readFile(t, root, ".mcp.json"))
 }
 
-// .mcp.json -> .codex/config.toml -> .mcp.json round-trip에서 매트릭스 패턴의
-// 의미가 보존되는지 확인한다. 비교는 byte가 아니라 파싱된 모델로 한다.
+// .mcp.json -> .codex/config.toml -> .mcp.json round-trip에서 매트릭스 패턴의 의미가 보존되는지 확인한다.
+// 비교는 byte가 아니라 파싱된 모델로 한다.
 func TestSyncMatrixRoundTrip(t *testing.T) {
 	root := setupProject(t, map[string]string{
 		".mcp.json": "mcp_matrix.json",

@@ -162,8 +162,8 @@ func tableSeparator(data []byte) []byte {
 	return []byte("\n\n")
 }
 
-// applyAndReload는 patch 결과를 재파싱해 유효성을 확인한 뒤에만 문서 상태를
-// 교체한다. 결과가 유효한 TOML이 아니면 원본을 건드리지 않고 에러를 돌려준다.
+// applyAndReload는 patch 결과를 재파싱해 유효성을 확인한 뒤에만 문서 상태를 교체한다.
+// 결과가 유효한 TOML이 아니면 원본을 건드리지 않고 에러를 돌려준다.
 func (d *Document) applyAndReload(edits []edit) error {
 	newRaw, err := applyEdits(d.raw, edits)
 	if err != nil {

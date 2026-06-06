@@ -1,5 +1,4 @@
-// Package mcpjson은 Claude Code의 .mcp.json을 내부 모델로 파싱하고,
-// 내부 모델에서 .mcp.json을 생성한다.
+// Package mcpjson은 Claude Code의 .mcp.json을 내부 모델로 파싱하고, 내부 모델에서 .mcp.json을 생성한다.
 package mcpjson
 
 import (
@@ -17,8 +16,8 @@ const (
 	TypeWS    = "ws"
 )
 
-// Claude Code에서만 의미 있는 서버 필드. 파싱은 하되 Codex로 변환할 수 없으므로
-// ClaudeOnly에 따로 모아 sync 코어의 skip 판정에 사용한다.
+// Claude Code에서만 의미 있는 서버 필드.
+// 파싱은 하되 Codex로 변환할 수 없으므로 ClaudeOnly에 따로 모아 sync 코어의 skip 판정에 사용한다.
 var claudeOnlyFields = map[string]bool{
 	"headersHelper": true,
 	"oauth":         true,
@@ -151,8 +150,8 @@ func parseServer(def json.RawMessage) (*Server, error) {
 	return srv, nil
 }
 
-// Marshal은 내부 모델을 .mcp.json 본문으로 직렬화한다. 키는 알파벳 순으로 정렬되고
-// 끝에 개행이 붙는다.
+// Marshal은 내부 모델을 .mcp.json 본문으로 직렬화한다.
+// 키는 알파벳 순으로 정렬되고 끝에 개행이 붙는다.
 func (f *File) Marshal() ([]byte, error) {
 	top := map[string]any{}
 	for key, raw := range f.Extra {
@@ -171,8 +170,8 @@ func (f *File) Marshal() ([]byte, error) {
 	return append(out, '\n'), nil
 }
 
-// compactRaw는 보존용 raw 값의 whitespace를 제거한다. 직렬화 시 들여쓰기가 다시 적용돼도
-// round-trip 후 모델이 byte 단위로 일치하도록 정규화하는 목적이다.
+// compactRaw는 보존용 raw 값의 whitespace를 제거한다.
+// 직렬화 시 들여쓰기가 다시 적용돼도 round-trip 후 모델이 byte 단위로 일치하도록 정규화하는 목적이다.
 func compactRaw(raw json.RawMessage) json.RawMessage {
 	var buf bytes.Buffer
 	if err := json.Compact(&buf, raw); err != nil {

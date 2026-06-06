@@ -6,8 +6,8 @@ import (
 	"github.com/pelletier/go-toml/v2/unstable"
 )
 
-// span은 raw bytes의 [start, end) 구간이다. 줄 경계까지 확장되어 있어 end는
-// 개행 문자 다음(또는 EOF)을 가리킨다.
+// span은 raw bytes의 [start, end) 구간이다.
+// 줄 경계까지 확장되어 있어 end는 개행 문자 다음(또는 EOF)을 가리킨다.
 type span struct {
 	start, end int
 }
@@ -33,9 +33,8 @@ type tableBlock struct {
 	items     []tableItem
 }
 
-// scanBlocks는 unstable parser로 top-level expression의 byte range를 수집해
-// 테이블 블록 목록으로 묶는다. 첫 테이블 이전의 root key-value는 patch 대상이
-// 아니므로 버린다.
+// scanBlocks는 unstable parser로 top-level expression의 byte range를 수집해 테이블 블록 목록으로 묶는다.
+// 첫 테이블 이전의 root key-value는 patch 대상이 아니므로 버린다.
 func scanBlocks(data []byte) ([]*tableBlock, error) {
 	type expr struct {
 		kind unstable.Kind
@@ -109,9 +108,8 @@ func nodeExtent(n *unstable.Node, minOff, maxOff *int) {
 	}
 }
 
-// lineSpan은 [minOff, maxOff) 구간을 줄 경계까지 확장한다. TOML은 top-level
-// expression이 한 줄에 하나뿐이므로, 줄 확장으로 테이블 괄호, '=', 같은 줄
-// 주석까지 안전하게 포함할 수 있다.
+// lineSpan은 [minOff, maxOff) 구간을 줄 경계까지 확장한다.
+// TOML은 top-level expression이 한 줄에 하나뿐이므로, 줄 확장으로 테이블 괄호, '=', 같은 줄 주석까지 안전하게 포함할 수 있다.
 func lineSpan(data []byte, minOff, maxOff int) span {
 	start := bytes.LastIndexByte(data[:minOff], '\n') + 1
 	end := len(data)
@@ -121,8 +119,8 @@ func lineSpan(data []byte, minOff, maxOff int) span {
 	return span{start: start, end: end}
 }
 
-// deleteSpan은 블록을 통째로 지울 때 제거할 구간이다. header에 붙은 선행 주석과
-// 마지막 key 뒤에 붙은 연속 주석을 포함하고, 뒤따르는 빈 줄을 흡수한다.
+// deleteSpan은 블록을 통째로 지울 때 제거할 구간이다.
+// header에 붙은 선행 주석과 마지막 key 뒤에 붙은 연속 주석을 포함하고, 뒤따르는 빈 줄을 흡수한다.
 // 빈 줄로 분리된 주석은 다음 section의 것일 수 있으므로 남긴다.
 func (b *tableBlock) deleteSpan(data []byte) span {
 	end := b.header.end

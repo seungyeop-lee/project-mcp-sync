@@ -42,8 +42,8 @@ func NewDiffCmd() *cobra.Command {
 				return nil
 			}
 			fmt.Fprint(cmd.OutOrStdout(), unifiedDiff(plan))
-			// drift는 unified diff로 이미 보고됐다. cobra의 "Error: ..." 출력을 막고
-			// exit code 전달용 에러만 돌려준다.
+			// drift는 unified diff로 이미 보고됐다.
+			// cobra의 "Error: ..." 출력을 막고 exit code 전달용 에러만 돌려준다.
 			cmd.SilenceErrors = true
 			return ErrDriftDetected
 		},
