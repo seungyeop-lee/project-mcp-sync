@@ -1,0 +1,16 @@
+# global settings
+model = "gpt-5.3-codex"
+
+# docs lookup server
+[mcp_servers.context7]
+command = "npx"
+args = ["-y", "@upstash/context7-mcp"]
+env = { CONTEXT7_API_KEY = "secret" }
+enabled = true
+startup_timeout_sec = 20
+
+[mcp_servers.legacy]
+command = "old-tool"
+
+[projects."/Users/me/repo"]
+trust_level = "trusted"

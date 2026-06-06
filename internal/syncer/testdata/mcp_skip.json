@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "envy": {
+      "type": "http",
+      "url": "${API_BASE}/mcp"
+    },
+    "good": {
+      "command": "npx",
+      "args": ["-y", "good-mcp"]
+    }
+  }
+}

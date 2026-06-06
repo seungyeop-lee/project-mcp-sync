@@ -1,0 +1,4 @@
+# envy is managed by hand because its url is composed from an env var
+[mcp_servers.envy]
+url = "https://old.example.com/mcp"
+startup_timeout_sec = 45

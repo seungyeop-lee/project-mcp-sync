@@ -1,0 +1,8 @@
+[mcp_servers.context7]
+command = "bunx"
+args = ["-y", "context7-mcp@2.0"]
+env = { CONTEXT7_API_KEY = "rotated" }
+
+[mcp_servers.notion]
+url = "https://mcp.notion.com/mcp"
+http_headers = { Notion-Version = "2022-06-28" }

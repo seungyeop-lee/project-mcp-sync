@@ -1,0 +1,5 @@
+# global settings
+model = "gpt-5.3-codex"
+
+[projects."/Users/me/repo"]
+trust_level = "trusted"
