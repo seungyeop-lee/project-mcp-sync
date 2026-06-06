@@ -16,14 +16,24 @@ const (
 	TypeWS    = "ws"
 )
 
-// Claude Code에서만 의미 있는 서버 필드.
-// 파싱은 하되 Codex로 변환할 수 없으므로 ClaudeOnly에 따로 모아 sync 코어의 skip 판정에 사용한다.
-var claudeOnlyFields = map[string]bool{
-	"headersHelper": true,
-	"oauth":         true,
-	"alwaysLoad":    true,
-	"timeout":       true,
+// Claude Code에서만 의미 있는 서버 필드의 분류 테이블.
+// 파싱 시 ClaudeOnly로 모으는 기준이자, ToCodex의 skip 판정(CodexIncompatibleClaudeOnly)과 codex가 source일 때 Upsert의 보존/제거 판정이 모두 이 테이블 하나를 본다.
+var claudeOnlyFields = map[string]mergePolicy{
+	// 코어 필드(headers 등)와 같은 영역(인증·헤더 구성)을 다루는 대체 수단. source 기준으로 덮어쓴 코어 필드와 공존하면 의미가 충돌하므로 merge 시 제거한다.
+	"headersHelper": policyRemove,
+	"oauth":         policyRemove,
+	// 코어 필드와 직교하는 메타데이터. source가 표현할 수 없는 정보이므로 merge 시 보존한다.
+	"alwaysLoad": policyPreserve,
+	"timeout":    policyPreserve,
 }
+
+// mergePolicy는 codex가 source일 때 Upsert가 기존 서버의 Claude-only 필드를 어떻게 다룰지 정한다.
+type mergePolicy int
+
+const (
+	policyRemove mergePolicy = iota
+	policyPreserve
+)
 
 type File struct {
 	Servers map[string]*Server
@@ -52,6 +62,19 @@ func (s *Server) EffectiveType() string {
 	return s.Type
 }
 
+// CodexIncompatibleClaudeOnly는 서버가 가진 Claude-only 필드 중 Codex에 대응 수단이 없어 변환을 막는 필드 이름을 정렬해 돌려준다.
+// 코어 필드와 영역이 겹치는 필드(policyRemove)가 곧 변환을 막는 필드다.
+func (s *Server) CodexIncompatibleClaudeOnly() []string {
+	var fields []string
+	for key := range s.ClaudeOnly {
+		if claudeOnlyFields[key] == policyRemove {
+			fields = append(fields, key)
+		}
+	}
+	sort.Strings(fields)
+	return fields
+}
+
 // Names는 서버 이름을 정렬해 돌려준다. map 순회 순서에 의존하지 않기 위한 helper.
 func (f *File) Names() []string {
 	names := make([]string, 0, len(f.Servers))
@@ -60,6 +83,38 @@ func (f *File) Names() []string {
 	}
 	sort.Strings(names)
 	return names
+}
+
+// Upsert는 codex가 source일 때의 서버 단위 merge다 (codextoml.Document.Upsert의 거울상).
+// 동명 서버가 없으면 src를 그대로 추가한다.
+// 있으면 코어 필드는 src로 교체하고, 기존 서버의 Claude-only 필드는 claudeOnlyFields 분류에 따라 직교 필드만 보존하며, Unknown 필드는 보존한다.
+func (f *File) Upsert(name string, src *Server) {
+	existing := f.Servers[name]
+	if existing == nil {
+		f.Servers[name] = src
+		return
+	}
+	merged := *src
+	merged.ClaudeOnly = map[string]json.RawMessage{}
+	for key, raw := range src.ClaudeOnly {
+		merged.ClaudeOnly[key] = raw
+	}
+	for key, raw := range existing.ClaudeOnly {
+		if claudeOnlyFields[key] == policyPreserve {
+			merged.ClaudeOnly[key] = raw
+		}
+	}
+	// 빈 map은 부재로 정규화해 Parse 결과 모델과의 비교(DeepEqual)를 깨지 않는다.
+	if len(merged.ClaudeOnly) == 0 {
+		merged.ClaudeOnly = nil
+	}
+	merged.Unknown = existing.Unknown
+	f.Servers[name] = &merged
+}
+
+// Delete는 서버 정의를 직교 Claude-only 필드까지 통째로 제거한다. 서버가 없으면 아무것도 하지 않는다.
+func (f *File) Delete(name string) {
+	delete(f.Servers, name)
 }
 
 func Parse(data []byte) (*File, error) {
@@ -120,7 +175,7 @@ func parseServer(def json.RawMessage) (*Server, error) {
 		case "headers":
 			err = json.Unmarshal(raw, &srv.Headers)
 		default:
-			if claudeOnlyFields[key] {
+			if _, ok := claudeOnlyFields[key]; ok {
 				if srv.ClaudeOnly == nil {
 					srv.ClaudeOnly = map[string]json.RawMessage{}
 				}

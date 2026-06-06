@@ -16,6 +16,7 @@ var ErrDriftDetected = errors.New("drift detected")
 
 type diffOptions struct {
 	project string
+	source  string
 }
 
 func NewDiffCmd() *cobra.Command {
@@ -24,14 +25,18 @@ func NewDiffCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "diff",
 		Short: "Report drift between .mcp.json and .codex/config.toml without writing files",
-		Long:  "Report drift between .mcp.json and .codex/config.toml without writing files.\n\nPrints a unified diff of the file that sync would change.\nExit codes: 0 = no drift, 1 = drift exists, 2 = error. Intended for CI and pre-commit checks.",
+		Long:  "Report drift between .mcp.json and .codex/config.toml without writing files.\n\nPrints a unified diff of the file that sync would change.\nUse --source to force the source of truth instead of auto-detection; the forced source file must exist.\nExit codes: 0 = no drift, 1 = drift exists, 2 = error. Intended for CI and pre-commit checks.",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			source, err := parseSource(opts.source)
+			if err != nil {
+				return err
+			}
 			root, err := resolveProjectRoot(opts.project)
 			if err != nil {
 				return err
 			}
-			plan, err := syncer.Compute(root)
+			plan, err := syncer.Compute(root, source)
 			if err != nil {
 				return err
 			}
@@ -50,6 +55,7 @@ func NewDiffCmd() *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&opts.project, "project", "", "project root directory (default: nearest directory containing .git, falling back to the current directory)")
+	addSourceFlag(cmd, &opts.source)
 
 	return cmd
 }

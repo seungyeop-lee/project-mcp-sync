@@ -1,6 +1,7 @@
 package mcpjson
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -204,6 +205,78 @@ func TestNamesSorted(t *testing.T) {
 	if got := f.Names(); !reflect.DeepEqual(got, want) {
 		t.Errorf("Names() = %v, want %v", got, want)
 	}
+}
+
+// 동명 서버 merge: 코어 필드는 src로 교체, 직교 필드(alwaysLoad, timeout)와 Unknown은 보존, 겹침 필드(oauth, headersHelper)는 제거.
+func TestUpsertMergesExistingServer(t *testing.T) {
+	f := &File{Servers: map[string]*Server{
+		"api": {
+			Type:    TypeHTTP,
+			URL:     "https://old.example.com/mcp",
+			Headers: map[string]string{"X-Old": "1"},
+			ClaudeOnly: map[string]json.RawMessage{
+				"oauth":         json.RawMessage(`{"clientId":"abc"}`),
+				"headersHelper": json.RawMessage(`"helper.sh"`),
+				"alwaysLoad":    json.RawMessage(`true`),
+				"timeout":       json.RawMessage(`30000`),
+			},
+			Unknown: map[string]json.RawMessage{"experimentalFlag": json.RawMessage(`true`)},
+		},
+	}}
+	f.Upsert("api", &Server{
+		Type:    TypeHTTP,
+		URL:     "https://new.example.com/mcp",
+		Headers: map[string]string{"Authorization": "Bearer ${TOKEN}"},
+	})
+
+	want := &Server{
+		Type:    TypeHTTP,
+		URL:     "https://new.example.com/mcp",
+		Headers: map[string]string{"Authorization": "Bearer ${TOKEN}"},
+		ClaudeOnly: map[string]json.RawMessage{
+			"alwaysLoad": json.RawMessage(`true`),
+			"timeout":    json.RawMessage(`30000`),
+		},
+		Unknown: map[string]json.RawMessage{"experimentalFlag": json.RawMessage(`true`)},
+	}
+	if got := f.Servers["api"]; !reflect.DeepEqual(got, want) {
+		t.Errorf("Upsert merged server mismatch\n got = %+v\nwant = %+v", got, want)
+	}
+}
+
+func TestUpsertAddsNewServer(t *testing.T) {
+	f := &File{Servers: map[string]*Server{}}
+	src := &Server{Command: "npx", Args: []string{"-y", "new-mcp"}}
+	f.Upsert("fresh", src)
+	if got := f.Servers["fresh"]; !reflect.DeepEqual(got, src) {
+		t.Errorf("Upsert added server mismatch\n got = %+v\nwant = %+v", got, src)
+	}
+}
+
+// 보존 대상 Claude-only 필드가 없으면 ClaudeOnly는 nil로 정규화되어 Parse 결과 모델과 일치해야 한다.
+func TestUpsertNormalizesEmptyClaudeOnly(t *testing.T) {
+	f := &File{Servers: map[string]*Server{
+		"api": {
+			Command:    "old-mcp",
+			ClaudeOnly: map[string]json.RawMessage{"oauth": json.RawMessage(`{}`)},
+		},
+	}}
+	f.Upsert("api", &Server{Command: "new-mcp"})
+	if got := f.Servers["api"].ClaudeOnly; got != nil {
+		t.Errorf("ClaudeOnly = %v, want nil", got)
+	}
+}
+
+func TestDeleteRemovesWholeServer(t *testing.T) {
+	f := &File{Servers: map[string]*Server{
+		"gone": {Command: "x", ClaudeOnly: map[string]json.RawMessage{"alwaysLoad": json.RawMessage(`true`)}},
+	}}
+	f.Delete("gone")
+	if len(f.Servers) != 0 {
+		t.Errorf("Servers = %v, want empty", f.Names())
+	}
+	// 없는 서버 삭제는 no-op이다
+	f.Delete("absent")
 }
 
 func parseFixture(t *testing.T, name string) *File {

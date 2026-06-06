@@ -25,10 +25,8 @@ func ToCodex(srv *mcpjson.Server) (set map[string]any, reason string) {
 	default:
 		return nil, fmt.Sprintf("type %q is not supported in Codex", srv.EffectiveType())
 	}
-	for _, field := range []string{"headersHelper", "oauth"} {
-		if _, ok := srv.ClaudeOnly[field]; ok {
-			return nil, fmt.Sprintf("%q has no Codex equivalent", field)
-		}
+	for _, field := range srv.CodexIncompatibleClaudeOnly() {
+		return nil, fmt.Sprintf("%q has no Codex equivalent", field)
 	}
 	// command/args/url의 ${VAR}는 Codex에 대응 수단이 없어 매트릭스 밖이다.
 	if reason := refReason("command", srv.Command); reason != "" {

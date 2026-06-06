@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "envy": {
+      "command": "hand-managed",
+      "env": {
+        "TOKEN": "abc"
+      }
+    },
+    "good": {
+      "args": [
+        "-y",
+        "good-mcp"
+      ],
+      "command": "npx"
+    }
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "envy": {
+      "command": "hand-managed",
+      "env": { "TOKEN": "abc" }
+    }
+  }
+}

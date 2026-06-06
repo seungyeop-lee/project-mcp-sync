@@ -17,6 +17,7 @@ Shell completions (zsh/bash/fish) are installed into the Homebrew completion pat
 - If `.mcp.json` exists, it is the source of truth and the `[mcp_servers.*]` tables in `.codex/config.toml` are updated. Non-MCP settings, comments, and Codex-only fields (`enabled`, timeouts, etc.) are preserved as-is.
 - If `.mcp.json` does not exist, `.mcp.json` is generated from `.codex/config.toml`. The codex file is not modified in this case.
 - If neither exists, it is an error.
+- `--source {mcp-json|codex}` forces the source of truth instead of auto-detection. With `--source codex`, an existing `.mcp.json` is updated from codex: the core fields are overwritten, Claude-only fields orthogonal to them (`alwaysLoad`, `timeout`) and unknown fields are preserved, and overlapping ones (`oauth`, `headersHelper`) are removed.
 - Servers that cannot be converted (type `ws`/`sse`, use of `headersHelper`/`oauth`, `${VAR}` patterns outside the conversion matrix) are skipped with a warning. Existing Codex tables with the same name as a skipped server are left untouched.
 
 For the detailed policy on source-of-truth detection, field-level merge, the `${VAR}` conversion matrix, and skip rules, see [docs/behavior.md](docs/behavior.md).
@@ -24,11 +25,12 @@ For the detailed policy on source-of-truth detection, field-level merge, the `${
 ## Usage
 
 ```sh
-project-mcp-sync sync              # synchronize
-project-mcp-sync sync --dry-run    # print a change summary only, write no files
-project-mcp-sync diff              # check for drift, print a unified diff (writes no files)
-project-mcp-sync completion zsh    # shell completion (zsh/bash/fish)
-project-mcp-sync --version         # print the current version
+project-mcp-sync sync                  # synchronize
+project-mcp-sync sync --dry-run        # print a change summary only, write no files
+project-mcp-sync sync --source codex   # force codex as the source of truth (also works with diff)
+project-mcp-sync diff                  # check for drift, print a unified diff (writes no files)
+project-mcp-sync completion zsh        # shell completion (zsh/bash/fish)
+project-mcp-sync --version             # print the current version
 ```
 
 The project root is found from the current directory by looking for the nearest `.git`; if there is no `.git`, the current directory is used as-is. You can specify it directly with `--project <dir>`.

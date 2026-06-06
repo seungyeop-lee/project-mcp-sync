@@ -1,0 +1,8 @@
+# envy keeps a literal ${...} that would change meaning in .mcp.json
+[mcp_servers.envy]
+command = "envy-mcp"
+env = { TOKEN = "${LITERAL}" }
+
+[mcp_servers.good]
+command = "npx"
+args = ["-y", "good-mcp"]

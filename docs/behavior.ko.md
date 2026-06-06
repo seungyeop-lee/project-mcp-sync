@@ -24,6 +24,14 @@ project-mcp-sync가 파일을 읽고 쓰는 규칙 전체를 정리한 문서다
 
 `.mcp.json`은 **존재하기만 하면** source of truth다. 내용이 비어 있거나 `mcpServers`가 없거나 `{}`여도 마찬가지이며, 이 경우 `.codex/config.toml`의 `[mcp_servers.*]` 테이블이 전부 삭제된다.
 
+### --source로 source 강제
+
+`sync`와 `diff`는 `--source {mcp-json|codex}`로 자동 판별 대신 source of truth를 강제할 수 있다.
+
+- 강제한 source 파일이 없으면 에러다 (exit 2). `--source`에 그 외의 값을 주는 것도 에러다 (exit 2).
+- `--source mcp-json`은 위 표의 첫 행과 같게 동작한다 (`.codex/config.toml`을 갱신하고, 없으면 생성한다).
+- `--source codex`는 `.mcp.json`이 없으면 생성 행과 같게 동작한다. `.mcp.json`이 이미 있으면 아래 ".codex/config.toml → .mcp.json 동기화" 규칙에 따라 **갱신**한다 — 이 갱신 경로는 `--source codex`로만 진입할 수 있다.
+
 ## .mcp.json → .codex/config.toml 동기화
 
 ### 필드 단위 merge
@@ -52,11 +60,32 @@ command, args, env, env_vars, url, bearer_token_env_var, http_headers, env_http_
 
 ## .codex/config.toml → .mcp.json 생성
 
-`.mcp.json`이 없을 때만 일어난다. codex의 각 서버를 변환해 새 `.mcp.json`을 만든다 (키는 알파벳 순 정렬).
+`.mcp.json`이 없을 때 일어난다 (자동 판별 또는 `--source codex`). codex의 각 서버를 변환해 새 `.mcp.json`을 만든다 (키는 알파벳 순 정렬).
 
 - `command`가 있는 서버 → stdio 서버 (`type` 생략)
 - `url`이 있는 서버 → `"type": "http"` 서버
 - `enabled` 등 Codex-only 필드는 `.mcp.json`으로 옮기지 않는다.
+
+## .codex/config.toml → .mcp.json 동기화
+
+`--source codex`이면서 `.mcp.json`이 이미 있을 때만 일어난다. `.mcp.json` → codex 동기화의 거울상이다. 서버별로 다음과 같이 동작한다:
+
+- **추가**: codex에만 있는 서버는 `mcpServers`에 추가된다.
+- **갱신**: 동명 서버가 있으면 코어 필드(`type, command, args, env, url, headers`)를 변환 결과로 교체한다. 기존 서버의 Claude-only 필드는 아래 분류를 따르고, 알 수 없는 필드는 보존한다.
+- **삭제**: codex에서 사라진 서버는 보존 대상 Claude-only 필드까지 정의를 통째로 삭제한다.
+- `enabled` 등 Codex-only 필드는 생성 때와 마찬가지로 옮기지 않는다.
+
+### 갱신 시 Claude-only 필드 분류
+
+| 필드 | merge 동작 | 이유 |
+|---|---|---|
+| `alwaysLoad`, `timeout` | 보존 | 코어 필드와 직교하는 메타데이터로, source가 표현할 수 없는 정보다 |
+| `oauth`, `headersHelper` | 제거 | 코어 필드와 같은 영역(인증·헤더 구성)을 다루는 대체 수단으로, 덮어쓴 코어 필드 옆에 남기면 충돌하는 설정이 만들어진다 |
+| 알 수 없는 필드 | 보존 | 보존이 안전한 기본값이다. 이후 겹침류로 판명되는 필드는 분류에 추가한다 |
+
+### 파일 재작성
+
+`.mcp.json`에는 주석이 없으므로 갱신 시 파일 전체를 다시 직렬화한다 (키는 알파벳 순 정렬). merge 결과가 현재 파일과 의미상 같으면 포맷이 직렬화 결과와 달라도 파일을 byte 단위 그대로 둔다.
 
 ## Skip 규칙
 

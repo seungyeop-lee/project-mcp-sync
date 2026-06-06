@@ -24,6 +24,14 @@ The target files are only `.mcp.json` and `.codex/config.toml` directly under th
 
 `.mcp.json` is the source of truth **as long as it exists**. This holds even when its content is empty, has no `mcpServers`, or is `{}`; in that case all `[mcp_servers.*]` tables in `.codex/config.toml` are deleted.
 
+### Forcing the source with --source
+
+`sync` and `diff` accept `--source {mcp-json|codex}` to force the source of truth instead of auto-detection.
+
+- The forced source file must exist; otherwise it is an error (exit 2). Any other value for `--source` is also an error (exit 2).
+- `--source mcp-json` behaves like the first row of the table above (`.codex/config.toml` is updated, or created if missing).
+- `--source codex` with no `.mcp.json` behaves like the generation row. When `.mcp.json` already exists, it is **updated** following the ".codex/config.toml → .mcp.json sync" rules below — this update path is only reachable through `--source codex`.
+
 ## .mcp.json → .codex/config.toml sync
 
 ### Field-level merge
@@ -52,11 +60,32 @@ Everything outside the `[mcp_servers.*]` blocks is preserved byte-for-byte. Non-
 
 ## .codex/config.toml → .mcp.json generation
 
-Happens only when `.mcp.json` is missing. Each codex server is converted to build a new `.mcp.json` (keys sorted alphabetically).
+Happens when `.mcp.json` is missing (by auto-detection, or with `--source codex`). Each codex server is converted to build a new `.mcp.json` (keys sorted alphabetically).
 
 - Server with `command` → stdio server (`type` omitted)
 - Server with `url` → `"type": "http"` server
 - Codex-only fields such as `enabled` are not carried over to `.mcp.json`.
+
+## .codex/config.toml → .mcp.json sync
+
+Happens only with `--source codex` when `.mcp.json` already exists. This is the mirror of the `.mcp.json` → codex sync. Per server, the behavior is:
+
+- **Add**: servers present only in codex are added to `mcpServers`.
+- **Update**: when a server with the same name exists, the core fields (`type, command, args, env, url, headers`) are replaced with the converted result. Claude-only fields on the existing server follow the classification below; unknown fields are preserved.
+- **Delete**: servers removed from codex have their definition deleted entirely, including preserved Claude-only fields.
+- Codex-only fields such as `enabled` are not carried over, same as in generation.
+
+### Claude-only field classification on update
+
+| fields | merge behavior | reason |
+|---|---|---|
+| `alwaysLoad`, `timeout` | preserved | metadata orthogonal to the core fields; the source cannot express it |
+| `oauth`, `headersHelper` | removed | alternate means covering the same area (auth/header composition) as the core fields; keeping them next to the overwritten core fields would produce conflicting configuration |
+| unknown fields | preserved | preserving is the safe default; if a future field turns out to overlap, it gets added to the classification |
+
+### File rewriting
+
+`.mcp.json` has no comments, so an update reserializes the whole file (keys sorted alphabetically). When the merge result is semantically identical to the current file, the file is left untouched byte-for-byte even if its formatting differs from the serializer's output.
 
 ## Skip rules
 

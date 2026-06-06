@@ -1,0 +1,25 @@
+{
+  "mcpServers": {
+    "context7": {
+      "alwaysLoad": true,
+      "args": [
+        "-y",
+        "context7-mcp@2.0"
+      ],
+      "command": "bunx",
+      "env": {
+        "CONTEXT7_API_KEY": "secret"
+      },
+      "experimentalFlag": true,
+      "timeout": 30000
+    },
+    "notion": {
+      "headers": {
+        "Authorization": "Bearer ${NOTION_TOKEN}",
+        "Notion-Version": "2022-06-28"
+      },
+      "type": "http",
+      "url": "https://mcp.notion.com/mcp"
+    }
+  }
+}

@@ -20,6 +20,15 @@ const (
 	codexFileName = ".codex/config.toml"
 )
 
+// Source는 진실의 원천 선택이다. SourceAuto면 파일 존재 여부로 자동 판별한다.
+type Source string
+
+const (
+	SourceAuto    Source = ""
+	SourceMCPJSON Source = "mcp-json"
+	SourceCodex   Source = "codex"
+)
+
 // Plan은 sync 한 번이 수행할 변경의 계산 결과다. 파일은 쓰지 않는다.
 // sync --dry-run의 요약과 diff command의 unified diff가 모두 이 값에서 나온다.
 type Plan struct {
@@ -40,8 +49,8 @@ type Plan struct {
 
 // Run은 root의 .mcp.json과 .codex/config.toml을 동기화한다.
 // dryRun이면 파일을 쓰지 않고 계산 결과만 돌려준다.
-func Run(root string, dryRun bool) (*Plan, error) {
-	plan, err := Compute(root)
+func Run(root string, source Source, dryRun bool) (*Plan, error) {
+	plan, err := Compute(root, source)
 	if err != nil {
 		return nil, err
 	}
@@ -54,9 +63,9 @@ func Run(root string, dryRun bool) (*Plan, error) {
 }
 
 // Compute는 파일을 쓰지 않고 sync 계획만 계산한다.
-// .mcp.json이 있으면 그것이 source of truth이고, 없으면 .codex/config.toml에서 .mcp.json을 생성한다.
-// 둘 다 없으면 에러다.
-func Compute(root string) (*Plan, error) {
+// SourceAuto면 .mcp.json이 있을 때 그것이 source of truth이고, 없으면 .codex/config.toml에서 .mcp.json을 생성한다. 둘 다 없으면 에러다.
+// source를 명시하면 자동 판별 대신 그 파일을 source로 강제하며, 해당 파일이 없으면 에러다.
+func Compute(root string, source Source) (*Plan, error) {
 	mcpData, mcpExists, err := readIfExists(filepath.Join(root, mcpFileName))
 	if err != nil {
 		return nil, err
@@ -66,13 +75,29 @@ func Compute(root string) (*Plan, error) {
 		return nil, err
 	}
 
-	switch {
-	case mcpExists:
+	switch source {
+	case SourceMCPJSON:
+		if !mcpExists {
+			return nil, fmt.Errorf("source %s requires %s, which does not exist under %s", SourceMCPJSON, mcpFileName, root)
+		}
 		return planCodexUpdate(root, mcpData, codexData)
-	case codexExists:
+	case SourceCodex:
+		if !codexExists {
+			return nil, fmt.Errorf("source %s requires %s, which does not exist under %s", SourceCodex, codexFileName, root)
+		}
+		if mcpExists {
+			return planMCPJSONUpdate(root, codexData, mcpData)
+		}
 		return planMCPJSONCreate(root, codexData)
 	default:
-		return nil, fmt.Errorf("neither %s nor %s exists under %s", mcpFileName, codexFileName, root)
+		switch {
+		case mcpExists:
+			return planCodexUpdate(root, mcpData, codexData)
+		case codexExists:
+			return planMCPJSONCreate(root, codexData)
+		default:
+			return nil, fmt.Errorf("neither %s nor %s exists under %s", mcpFileName, codexFileName, root)
+		}
 	}
 }
 
@@ -141,6 +166,66 @@ func planCodexUpdate(root string, mcpData, codexData []byte) (*Plan, error) {
 	}
 
 	plan.New = doc.Bytes()
+	return plan, nil
+}
+
+// planMCPJSONUpdate는 codex를 source로 강제했고 .mcp.json이 이미 있을 때, .mcp.json을 갱신하는 계획을 계산한다 (planCodexUpdate의 거울상).
+func planMCPJSONUpdate(root string, codexData, mcpData []byte) (*Plan, error) {
+	doc, err := codextoml.Parse(codexData)
+	if err != nil {
+		return nil, err
+	}
+	// before는 add/update 분류용 원본 스냅샷, after는 merge가 적용되는 사본이다.
+	before, err := mcpjson.Parse(mcpData)
+	if err != nil {
+		return nil, err
+	}
+	after, err := mcpjson.Parse(mcpData)
+	if err != nil {
+		return nil, err
+	}
+
+	plan := &Plan{root: root, File: mcpFileName, Old: mcpData}
+	skipped := map[string]bool{}
+	for _, name := range doc.Names() {
+		srv, reason := convert.ToMCPJSON(doc.Server(name))
+		if reason != "" {
+			skipped[name] = true
+			plan.Warnings = append(plan.Warnings, fmt.Sprintf("server %q skipped: %s", name, reason))
+			continue
+		}
+		after.Upsert(name, srv)
+	}
+	// source에서 사라진 서버는 정의 통째 삭제.
+	// skip한 서버는 source에 남아 있으므로 여기 걸리지 않는다 (동명 기존 서버 보존).
+	for _, name := range before.Names() {
+		if doc.Server(name) == nil {
+			after.Delete(name)
+			plan.Deletes = append(plan.Deletes, name)
+		}
+	}
+
+	for _, name := range doc.Names() {
+		if skipped[name] {
+			continue
+		}
+		switch {
+		case before.Servers[name] == nil:
+			plan.Adds = append(plan.Adds, name)
+		case !reflect.DeepEqual(before.Servers[name], after.Servers[name]):
+			plan.Updates = append(plan.Updates, name)
+		}
+	}
+
+	// Marshal은 키 정렬과 들여쓰기를 강제하므로, 모델이 같으면 원본 byte를 그대로 둬서 의미 변화 없는 포맷 재작성을 막는다.
+	if reflect.DeepEqual(before, after) {
+		plan.New = plan.Old
+		return plan, nil
+	}
+	plan.New, err = after.Marshal()
+	if err != nil {
+		return nil, err
+	}
 	return plan, nil
 }
 
