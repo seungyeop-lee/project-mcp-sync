@@ -2,6 +2,14 @@
 
 Claude Code의 `.mcp.json`과 Codex의 `.codex/config.toml` 사이에서 project-scoped MCP 서버 정의를 동기화하는 CLI.
 
+## 설치
+
+```sh
+brew install seungyeop-lee/tap/project-mcp-sync
+```
+
+shell completion(zsh/bash/fish)은 Homebrew completion 경로에 함께 설치된다.
+
 ## 동작 방식
 
 - `.mcp.json`이 있으면 source of truth로 삼아 `.codex/config.toml`의 `[mcp_servers.*]` 테이블을 갱신한다. 비-MCP 설정, 주석, Codex-only 필드(`enabled`, timeout류 등)는 그대로 보존된다.
